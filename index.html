@@ -1,0 +1,2180 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Westeros Interactive | O RPG dos Sete Reinos</title>
+    <meta name="description" content="RPG interativo baseado no universo de Game of Thrones. Comande exércitos, crie sua casa e tome decisões no Conselho do Rei.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=MedievalSharp&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* ====== RESET E BASE ====== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Lato', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a, #141414);
+            color: #e9ecef;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* ====== VARIÁVEIS CSS ====== */
+        :root {
+            --color-primary: #d4af37;
+            --color-primary-dark: #b8941c;
+            --color-secondary: #8b0000;
+            --color-ice: #4a90e2;
+            --color-dark: #1e1e1e;
+            --color-darker: #141414;
+            --color-white: #f8f9fa;
+            --color-silver: #adb5bd;
+            
+            --gradient-gold: linear-gradient(135deg, #d4af37, #b8941c);
+            --gradient-fire: linear-gradient(135deg, #8b0000, #ff4500);
+            --gradient-ice: linear-gradient(135deg, #4a90e2, #87ceeb);
+            
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            --shadow-gold: 0 0 40px rgba(212, 175, 55, 0.4);
+            --shadow-fire: 0 0 40px rgba(255, 69, 0, 0.4);
+            --shadow-ice: 0 0 40px rgba(74, 144, 226, 0.4);
+        }
+        
+        /* ====== TEMAS ====== */
+        .theme-stark {
+            --color-primary: #4a90e2;
+            --color-primary-dark: #2a6ebf;
+            --gradient-gold: var(--gradient-ice);
+            --shadow-gold: var(--shadow-ice);
+        }
+        
+        .theme-lannister {
+            --color-primary: #d4af37;
+            --color-primary-dark: #b8941c;
+            --gradient-gold: linear-gradient(135deg, #d4af37, #b8941c);
+            --shadow-gold: 0 0 40px rgba(212, 175, 55, 0.4);
+        }
+        
+        .theme-targaryen {
+            --color-primary: #ff4500;
+            --color-primary-dark: #8b0000;
+            --gradient-gold: var(--gradient-fire);
+            --shadow-gold: var(--shadow-fire);
+        }
+        
+        /* ====== ANIMAÇÕES AMBIENTAIS ====== */
+        .theme-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        .theme-stark .theme-effects.snow {
+            opacity: 0.6;
+        }
+        
+        .theme-lannister .theme-effects.sparkle {
+            opacity: 0.4;
+        }
+        
+        .theme-targaryen .theme-effects.fire {
+            opacity: 0.5;
+        }
+        
+        /* ====== EFEITOS DE NEVE ====== */
+        .snowflake {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            filter: blur(1px);
+            opacity: 0.8;
+            animation: snowFall linear infinite;
+        }
+        
+        @keyframes snowFall {
+            0% {
+                transform: translateY(-100px) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) translateX(30px);
+                opacity: 0;
+            }
+        }
+        
+        /* ====== EFEITOS DE FAÍSCAS ====== */
+        .spark {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: gold;
+            border-radius: 50%;
+            animation: sparkle 3s infinite;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+        
+        /* ====== EFEITOS DE FOGO ====== */
+        .ember {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, #ff4500 0%, #ff8c00 50%, transparent 70%);
+            border-radius: 50%;
+            animation: emberRise 4s infinite;
+        }
+        
+        @keyframes emberRise {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(20px);
+                opacity: 0;
+            }
+        }
+        
+        /* ====== BOTÕES ====== */
+        .btn {
+            padding: 1rem 2rem;
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary {
+            background: var(--gradient-gold);
+            color: var(--color-white);
+            box-shadow: var(--shadow);
+            border: 2px solid transparent;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-gold);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--color-white);
+            border: 2px solid var(--color-primary);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-gold);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--color-primary);
+            border: 2px solid var(--color-primary);
+        }
+        
+        .btn-outline:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        /* ====== LAYOUT ====== */
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .section {
+            padding: 4rem 0;
+            position: relative;
+        }
+        
+        .section-dark {
+            background: rgba(20, 20, 20, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .mb-1 { margin-bottom: 1rem; }
+        .mb-2 { margin-bottom: 2rem; }
+        .mb-3 { margin-bottom: 3rem; }
+        .mb-4 { margin-bottom: 4rem; }
+        
+        .w-100 { width: 100%; }
+        
+        .flex-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 2rem;
+        }
+        
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        
+        /* ====== HEADER ====== */
+        .main-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            padding: 0.5rem 0;
+            transition: all 0.3s ease;
+        }
+        
+        .main-header.scrolled {
+            padding: 0.25rem 0;
+            box-shadow: var(--shadow);
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+        
+        .logo {
+            font-family: 'MedievalSharp', cursive;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 1rem;
+            margin-left: auto;
+        }
+        
+        .nav-link {
+            color: #e9ecef;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--color-primary);
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .house-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(30, 30, 30, 0.8);
+            padding: 0.25rem;
+            border-radius: 12px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .house-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            color: #adb5bd;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .house-btn:hover {
+            color: var(--color-white);
+            border-color: var(--color-primary);
+        }
+        
+        .house-btn.active {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--color-primary);
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-gold);
+        }
+        
+        /* ====== HERO SECTION ====== */
+        .hero-section {
+            height: 100vh;
+            min-height: 700px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(rgba(10, 10, 10, 0.85), rgba(10, 10, 10, 0.7)), url('fundo do inicio.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        
+        .hero-content {
+            text-align: center;
+            max-width: 800px;
+            padding: 3rem;
+            position: relative;
+            z-index: 2;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .hero-title {
+            font-family: 'Cinzel', serif;
+            font-size: 4rem;
+            font-weight: 900;
+            background: var(--gradient-gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+        }
+        
+        .hero-lead {
+            font-size: 1.25rem;
+            color: #f8f9fa;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        /* ====== CARDS ====== */
+        .card {
+            background: rgba(30, 30, 30, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow), var(--shadow-gold);
+        }
+        
+        /* ====== PERSONAGENS ====== */
+        .character-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .character-tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: 2px solid transparent;
+            color: #adb5bd;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .character-tab:hover {
+            color: var(--color-primary);
+            border-color: rgba(212, 175, 55, 0.2);
+        }
+        
+        .character-tab.active {
+            color: var(--color-primary);
+            border-color: var(--color-primary);
+            background: rgba(212, 175, 55, 0.1);
+            box-shadow: var(--shadow-gold);
+        }
+        
+        .character-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .character-display {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* CORREÇÃO DAS IMAGENS - REMOVIDO O CORTE */
+        .character-image-container {
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 3px solid var(--color-primary);
+            box-shadow: var(--shadow);
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 400px;
+        }
+        
+        .character-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* MUDADO DE cover PARA contain - NÃO CORTA */
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .image-fallback {
+            width: 100%;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--color-primary)20, transparent);
+            color: var(--color-primary);
+            font-size: 48px;
+        }
+        
+        /* ====== SIMULADOR DE GUERRA ====== */
+        .simulator {
+            background: rgba(10, 10, 10, 0.9);
+            border-radius: 16px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            overflow: hidden;
+        }
+        
+        .simulator-header {
+            background: linear-gradient(135deg, var(--color-darker), var(--color-dark));
+            padding: 2rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .simulator-steps {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+        
+        .simulator-step {
+            flex: 0 0 auto;
+            min-width: 180px;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .simulator-step.active {
+            border-color: var(--color-primary);
+            background: rgba(212, 175, 55, 0.1);
+            box-shadow: var(--shadow-gold);
+        }
+        
+        .simulator-content {
+            padding: 2rem;
+            min-height: 400px;
+        }
+        
+        .simulator-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 1rem;
+        }
+        
+        /* ====== CRIADOR DE CASA ====== */
+        .house-creator {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 992px) {
+            .house-creator {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .creator-form {
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--color-primary);
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            color: var(--color-white);
+            font-family: 'Lato', sans-serif;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+        
+        .color-picker {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.selected {
+            border-color: var(--color-white);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        
+        .house-preview {
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* ====== CONSELHO ====== */
+        .council-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .council-card {
+            cursor: pointer;
+        }
+        
+        .council-card:hover {
+            transform: translateY(-8px);
+        }
+        
+        /* ====== MODAL ====== */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--color-dark);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            border: 2px solid var(--color-primary);
+            box-shadow: var(--shadow);
+        }
+        
+        /* ====== FOOTER ====== */
+        .main-footer {
+            background: #0a0a0a;
+            border-top: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 3rem 0 2rem;
+        }
+        
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #adb5bd;
+            font-size: 0.875rem;
+        }
+        
+        /* ====== RESPONSIVIDADE ====== */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-menu {
+                margin: 0;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-content {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .hero-buttons .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .simulator-controls {
+                flex-direction: column;
+            }
+            
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            
+            .character-image-container {
+                min-height: 250px;
+                max-height: 300px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .hero-lead {
+                font-size: 1rem;
+            }
+            
+            .character-image-container {
+                min-height: 200px;
+                max-height: 250px;
+            }
+            
+            .hero-content {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ====== EFEITOS TEMÁTICOS ====== -->
+    <div class="theme-effects snow" id="snowEffects"></div>
+    <div class="theme-effects sparkle" id="sparkleEffects"></div>
+    <div class="theme-effects fire" id="fireEffects"></div>
+
+    <!-- ====== HEADER ====== -->
+    <header class="main-header" id="mainHeader">
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">
+                    WESTEROS RPG
+                </a>
+                
+                <nav class="nav-menu">
+                    <a href="#characters" class="nav-link">
+                        Personagens
+                    </a>
+                    <a href="#war" class="nav-link">
+                        Guerra
+                    </a>
+                    <a href="#create" class="nav-link">
+                        Criar Casa
+                    </a>
+                    <a href="#council" class="nav-link">
+                        Conselho
+                    </a>
+                </nav>
+                
+                <div class="house-selector">
+                    <button class="house-btn active" data-theme="default">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="house-btn" data-theme="stark">
+                        <i class="fas fa-snowflake"></i>
+                    </button>
+                    <button class="house-btn" data-theme="lannister">
+                        <i class="fas fa-crown"></i>
+                    </button>
+                    <button class="house-btn" data-theme="targaryen">
+                        <i class="fas fa-dragon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ====== HERO SECTION ====== -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">WESTEROS INTERACTIVE</h1>
+            <p class="hero-lead">
+                Um RPG dos Sete Reinos onde suas decisões moldam o destino do reino.
+                Escolha sua casa, comande exércitos e jogue o jogo dos tronos.
+            </p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary" onclick="startJourney()">
+                    <i class="fas fa-play"></i>
+                    Começar Jornada
+                </button>
+                <button class="btn btn-secondary" onclick="scrollToSection('characters')">
+                    <i class="fas fa-chevron-down"></i>
+                    Explorar
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== PERSONAGENS ====== -->
+    <section class="section" id="characters">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2>PERSONAGENS ÉPICOS</h2>
+                <p class="hero-lead">Conheça os heróis e vilões que definiram o destino de Westeros</p>
+            </div>
+            
+            <div class="character-tabs" id="characterTabs"></div>
+            
+            <div id="characterDisplay"></div>
+        </div>
+    </section>
+
+    <!-- ====== SIMULADOR DE GUERRA ====== -->
+    <section class="section section-dark" id="war">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2>SIMULADOR DE GUERRA</h2>
+                <p class="hero-lead">Comande exércitos, tome decisões estratégicas e determine o destino das batalhas</p>
+            </div>
+            
+            <div class="simulator">
+                <div class="simulator-header">
+                    <h3>Campanha Militar dos Sete Reinos</h3>
+                    <div class="simulator-steps" id="simulatorSteps"></div>
+                </div>
+                
+                <div class="simulator-content" id="simulatorContent"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== CRIADOR DE CASA ====== -->
+    <section class="section" id="create">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2>CRIAR SUA CASA</h2>
+                <p class="hero-lead">Forje seu brasão, estabeleça seu lema e escreva sua história em Westeros</p>
+            </div>
+            
+            <div class="house-creator">
+                <div class="creator-form">
+                    <div class="form-group">
+                        <label class="form-label">Nome da Casa</label>
+                        <input type="text" class="form-input" id="houseName" 
+                               placeholder="ex: Casa Corvinal da Alvorada" 
+                               value="Casa Corvinal da Alvorada">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Lema da Casa</label>
+                        <input type="text" class="form-input" id="houseMotto" 
+                               placeholder="ex: 'Na Escuridão, Nós Vigiamos'" 
+                               value="Na Escuridão, Nós Vigiamos">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Símbolo</label>
+                        <div class="color-picker" id="symbolPicker"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Cores da Casa</label>
+                        <div class="color-picker" id="colorPicker"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Território</label>
+                        <select class="form-input" id="houseTerritory">
+                            <option value="north">O Norte</option>
+                            <option value="south">O Sul</option>
+                            <option value="west">O Oeste</option>
+                            <option value="east">O Leste</option>
+                            <option value="riverlands">Terras Fluviais</option>
+                            <option value="vale">O Vale</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-primary w-100" onclick="forgeHouse()">
+                        <i class="fas fa-hammer"></i>
+                        FORJAR CASA
+                    </button>
+                </div>
+                
+                <div class="house-preview" id="housePreview"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== CONSELHO DO REI ====== -->
+    <section class="section section-dark" id="council">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2>CONSELHO DO REI</h2>
+                <p class="hero-lead">Tome decisões políticas que afetarão todo o reino. Cada escolha tem consequências.</p>
+            </div>
+            
+            <div class="council-grid" id="councilGrid"></div>
+        </div>
+    </section>
+
+    <!-- ====== MODAL ====== -->
+    <div class="modal" id="decisionModal">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <!-- ====== FOOTER ====== -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <h4>WESTEROS RPG</h4>
+                    <p>Uma experiência interativa baseada no universo de Game of Thrones.</p>
+                </div>
+                
+                <div>
+                    <h4>Explorar</h4>
+                    <ul>
+                        <li><a href="#characters">Personagens</a></li>
+                        <li><a href="#war">Simulador de Guerra</a></li>
+                        <li><a href="#create">Criar Casa</a></li>
+                        <li><a href="#council">Conselho do Rei</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4>Contato</h4>
+                    <p>Envie seu feedback para:</p>
+                    <a href="mailto:pradoprofissional1910@gmail.com" style="color: var(--color-primary);">
+                        pradoprofissional1910@gmail.com
+                    </a>
+                </div>
+                
+                <div>
+                    <h4>Recursos</h4>
+                    <ul>
+                        <li><a href="https://developer.mozilla.org" target="_blank">MDN Web Docs</a></li>
+                        <li><a href="https://css-tricks.com" target="_blank">CSS Tricks</a></li>
+                        <li><a href="https://gameofthrones.fandom.com" target="_blank">Wiki GOT</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2024 Westeros Interactive | Desenvolvido com <i class="fas fa-heart" style="color: #e74c3c;"></i> para fãs de Game of Thrones</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ====== SISTEMA PRINCIPAL ======
+        document.addEventListener('DOMContentLoaded', function() {
+            initThemeSystem();
+            initCharacterSystem();
+            initWarSimulator();
+            initHouseCreator();
+            initCouncilSystem();
+            setupScrollEffect();
+            setupNavigation();
+            
+            showNotification('Bem-vindo ao Westeros Interactive!', 'success');
+        });
+        
+        // ====== SISTEMA DE TEMAS ======
+        function initThemeSystem() {
+            createThemeEffects();
+            
+            document.querySelectorAll('.house-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const theme = this.dataset.theme;
+                    setTheme(theme);
+                    
+                    document.querySelectorAll('.house-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    showNotification(`Tema ${getThemeName(theme)} ativado!`, 'success');
+                });
+            });
+            
+            // Carregar tema salvo
+            const savedTheme = localStorage.getItem('westeros-theme') || 'default';
+            setTheme(savedTheme);
+        }
+        
+        function setTheme(theme) {
+            document.body.classList.remove('theme-stark', 'theme-lannister', 'theme-targaryen');
+            if (theme !== 'default') {
+                document.body.classList.add('theme-' + theme);
+            }
+            
+            document.querySelectorAll('.house-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.theme === theme);
+            });
+            
+            localStorage.setItem('westeros-theme', theme);
+        }
+        
+        function getThemeName(theme) {
+            const names = {
+                'default': 'Padrão',
+                'stark': 'Stark',
+                'lannister': 'Lannister',
+                'targaryen': 'Targaryen'
+            };
+            return names[theme] || theme;
+        }
+        
+        function createThemeEffects() {
+            // Neve para Stark
+            const snowContainer = document.getElementById('snowEffects');
+            for (let i = 0; i < 60; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'snowflake';
+                flake.style.cssText = `
+                    width: ${Math.random() * 4 + 2}px;
+                    height: ${Math.random() * 4 + 2}px;
+                    left: ${Math.random() * 100}%;
+                    animation-duration: ${Math.random() * 8 + 8}s;
+                    animation-delay: ${Math.random() * 5}s;
+                `;
+                snowContainer.appendChild(flake);
+            }
+            
+            // Brilho para Lannister
+            const sparkleContainer = document.getElementById('sparkleEffects');
+            for (let i = 0; i < 40; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                spark.style.cssText = `
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                    animation-delay: ${Math.random() * 3}s;
+                `;
+                sparkleContainer.appendChild(spark);
+            }
+            
+            // Fogo para Targaryen
+            const fireContainer = document.getElementById('fireEffects');
+            for (let i = 0; i < 30; i++) {
+                const ember = document.createElement('div');
+                ember.className = 'ember';
+                ember.style.cssText = `
+                    left: ${Math.random() * 100}%;
+                    animation-duration: ${Math.random() * 3 + 2}s;
+                    animation-delay: ${Math.random() * 2}s;
+                `;
+                fireContainer.appendChild(ember);
+            }
+        }
+        
+        // ====== SISTEMA DE PERSONAGENS ======
+        function initCharacterSystem() {
+            const characters = [
+                {
+                    id: 1,
+                    name: "Jon Snow",
+                    house: "stark",
+                    title: "Rei do Norte",
+                    status: "Vivo",
+                    image: "jon.webp",
+                    fallback: "👑",
+                    color: "#4a90e2",
+                    quote: "\"A noite é escura e cheia de terrores, mas o fogo os afasta.\"",
+                    bio: "Bastardo de Winterfell que ascendeu a Rei do Norte. Descobridor de sua verdadeira herança Targaryen e unificador dos Povos Livres.",
+                    stats: {
+                        combate: 85,
+                        estrategia: 80,
+                        lideranca: 90,
+                        lealdade: 95
+                    },
+                    abilities: ["Espada Longa", "Liderança", "Diplomacia", "Estratégia"]
+                },
+                {
+                    id: 2,
+                    name: "Daenerys Targaryen",
+                    house: "targaryen",
+                    title: "Mãe dos Dragões",
+                    status: "Morta",
+                    image: "dany.jpg",
+                    fallback: "🐉",
+                    color: "#ff4500",
+                    quote: "\"Eu sou Daenerys Stormborn, e eu tomarei o que é meu.\"",
+                    bio: "A última da linhagem Targaryen, quebradora de correntes e mãe de dragões. Conquistou cidades e reinos com fogo e sangue.",
+                    stats: {
+                        combate: 75,
+                        estrategia: 85,
+                        lideranca: 95,
+                        lealdade: 60
+                    },
+                    abilities: ["Comando de Dragões", "Oratória", "Estratégia", "Diplomacia"]
+                },
+                {
+                    id: 3,
+                    name: "Tyrion Lannister",
+                    house: "lannister",
+                    title: "Mão do Rei",
+                    status: "Vivo",
+                    image: "tyrion.jpg",
+                    fallback: "🍷",
+                    color: "#ffd700",
+                    quote: "\"Nunca esqueça o que você é, pois certamente o mundo não se esquecerá.\"",
+                    bio: "Anão, bebedor e leitor, mas o estrategista mais astuto de Westeros. Sobreviveu por sua mente onde outros falharam.",
+                    stats: {
+                        combate: 40,
+                        estrategia: 95,
+                        lideranca: 85,
+                        lealdade: 70
+                    },
+                    abilities: ["Estratégia", "Diplomacia", "Oratória", "Política"]
+                },
+                {
+                    id: 4,
+                    name: "Arya Stark",
+                    house: "stark",
+                    title: "Sem Nome",
+                    status: "Viva",
+                    image: "argajpg",
+                    fallback: "🗡️",
+                    color: "#4a90e2",
+                    quote: "\"Uma garota não tem nome. Uma garota é No One.\"",
+                    bio: "A filha mais nova de Ned Stark, treinada como assassina pelos Homens sem Rosto. Viajou por Westeros em busca de vingança.",
+                    stats: {
+                        combate: 95,
+                        estrategia: 75,
+                        lideranca: 60,
+                        lealdade: 90
+                    },
+                    abilities: ["Habilidades de Assassino", "Furtividade", "Combate", "Sobrevivência"]
+                },
+                {
+                    id: 5,
+                    name: "Cersei Lannister",
+                    house: "lannister",
+                    title: "Rainha dos Sete Reinos",
+                    status: "Morta",
+                    image: "cersei.jpg",
+                    fallback: "👑",
+                    color: "#ffd700",
+                    quote: "\"Quando você joga o Jogo dos Tronos, você vence ou você morre.\"",
+                    bio: "Rainha ambiciosa e impiedosa, disposta a fazer qualquer coisa para proteger sua família e manter o poder.",
+                    stats: {
+                        combate: 30,
+                        estrategia: 85,
+                        lideranca: 80,
+                        lealdade: 20
+                    },
+                    abilities: ["Manipulação", "Estratégia", "Política", "Intriga"]
+                },
+                {
+                    id: 6,
+                    name: "Sansa Stark",
+                    house: "stark",
+                    title: "Rainha do Norte",
+                    status: "Viva",
+                    image: "sansa.webp",
+                    fallback: "👸",
+                    color: "#4a90e2",
+                    quote: "\"Eu sou Sansa Stark de Winterfell. Isso é tudo que eu preciso ser.\"",
+                    bio: "Começou como uma jovem sonhadora e se tornou uma política astuta, aprendendo com os melhores manipuladores de Westeros.",
+                    stats: {
+                        combate: 40,
+                        estrategia: 80,
+                        lideranca: 85,
+                        lealdade: 90
+                    },
+                    abilities: ["Diplomacia", "Política", "Liderança", "Estratégia"]
+                },
+                {
+                    id: 7,
+                    name: "Jaime Lannister",
+                    house: "lannister",
+                    title: "Matador de Reis",
+                    status: "Morto",
+                    image: "jaime.jpg",
+                    fallback: "⚔️",
+                    color: "#ffd700",
+                    quote: "\"As coisas que faço por amor.\"",
+                    bio: "Cavaleiro mais habilidoso de Westeros, conhecido como Matador de Reis. Sua jornada de redenção o levou a lutar pelos vivos.",
+                    stats: {
+                        combate: 95,
+                        estrategia: 70,
+                        lideranca: 75,
+                        lealdade: 60
+                    },
+                    abilities: ["Combate com Espada", "Estratégia Militar", "Liderança", "Coragem"]
+                },
+                {
+                    id: 8,
+                    name: "Bran Stark",
+                    house: "stark",
+                    title: "Rei dos Seis Reinos",
+                    status: "Vivo",
+                    image: "bran.webp",
+                    fallback: "👁️",
+                    color: "#4a90e2",
+                    quote: "\"Por que você acha que vim até aqui?\"",
+                    bio: "Ex-herdeiro de Winterfell que se tornou o Corvo de Três Olhos, com conhecimento de todos os eventos passados e presentes.",
+                    stats: {
+                        combate: 20,
+                        estrategia: 95,
+                        lideranca: 85,
+                        lealdade: 90
+                    },
+                    abilities: ["Visão Greenseer", "Estratégia", "Diplomacia", "Conhecimento"]
+                },
+                {
+                    id: 9,
+                    name: "Eddard Stark",
+                    house: "stark",
+                    title: "Mão do Rei",
+                    status: "Morto",
+                    image: "ned.jpg",
+                    fallback: "⚔️",
+                    color: "#4a90e2",
+                    quote: "\"Aquele que dá a sentença deve brandir a espada.\"",
+                    bio: "Senhor de Winterfell e Protetor do Norte, conhecido por sua honra inabalável que o levou ao trágico destino.",
+                    stats: {
+                        combate: 80,
+                        estrategia: 70,
+                        lideranca: 85,
+                        lealdade: 95
+                    },
+                    abilities: ["Espada Gelo", "Justiça", "Liderança", "Honra"]
+                },
+                {
+                    id: 10,
+                    name: "Oberyn Martell",
+                    house: "martell",
+                    title: "Príncipe de Dorne",
+                    status: "Morto",
+                    image: "oberyn.jpg",
+                    fallback: "☀️",
+                    color: "#ff6b35",
+                    quote: "\"Você vai morrer nessa areia, Sor Gregor.\"",
+                    bio: "Viçoso e letal príncipe de Dorne, mestre em venenos e combate com lança, em busca de vingança pela irmã.",
+                    stats: {
+                        combate: 90,
+                        estrategia: 75,
+                        lideranca: 70,
+                        lealdade: 85
+                    },
+                    abilities: ["Combate com Lança", "Veneno", "Agilidade", "Vingança"]
+                },
+                {
+                    id: 11,
+                    name: "Brienne de Tarth",
+                    house: "tarth",
+                    title: "Cavaleira da Guarda Real",
+                    status: "Viva",
+                    image: "brienne.jpg",
+                    fallback: "🛡️",
+                    color: "#5d8aa8",
+                    quote: "\"Sou Brienne de Tarth. Filha de Selwyn, o Pavão de Tarth.\"",
+                    bio: "Cavaleira leal e habilidosa que jura proteger as filhas de Catelyn Stark, mantendo seu juramento acima de tudo.",
+                    stats: {
+                        combate: 88,
+                        estrategia: 65,
+                        lideranca: 75,
+                        lealdade: 98
+                    },
+                    abilities: ["Combate com Espada", "Lealdade", "Proteção", "Coragem"]
+                },
+                {
+                    id: 12,
+                    name: "Theon Greyjoy",
+                    house: "greyjoy",
+                    title: "Nascido do Ferro",
+                    status: "Morto",
+                    image: "theon.jpg",
+                    fallback: "⚓",
+                    color: "#2c3e50",
+                    quote: "\"O que é morto não pode morrer.\"",
+                    bio: "Refém criado pelos Stark que traiu sua família adotiva, sofreu horrores e encontrou redenção ao final.",
+                    stats: {
+                        combate: 70,
+                        estrategia: 60,
+                        lideranca: 65,
+                        lealdade: 40
+                    },
+                    abilities: ["Arco", "Marinharia", "Adaptação", "Redenção"]
+                }
+            ];
+            
+            // Criar tabs
+            const tabsContainer = document.getElementById('characterTabs');
+            characters.forEach((char, index) => {
+                const tab = document.createElement('button');
+                tab.className = `character-tab ${index === 0 ? 'active' : ''}`;
+                tab.innerHTML = `
+                    <i class="fas fa-${getHouseIcon(char.house)}"></i>
+                    ${char.name}
+                `;
+                tab.addEventListener('click', () => showCharacter(char, index));
+                tabsContainer.appendChild(tab);
+            });
+            
+            // Mostrar primeiro personagem
+            showCharacter(characters[0], 0);
+            
+            function showCharacter(character, index) {
+                // Atualizar tabs ativas
+                document.querySelectorAll('.character-tab').forEach((tab, i) => {
+                    tab.classList.toggle('active', i === index);
+                });
+                
+                // Criar display do personagem
+                const displayContainer = document.getElementById('characterDisplay');
+                displayContainer.innerHTML = `
+                    <div class="character-display">
+                        <div class="card" style="background: linear-gradient(135deg, ${character.color}20, transparent);">
+                            <div class="character-image-container">
+                                <img src="${character.image}" alt="${character.name}" 
+                                     class="character-image"
+                                     onerror="this.onerror=null; this.outerHTML='<div class=\\'image-fallback\\'><i class=\\'fas fa-${getHouseIcon(character.house)}\\'></i></div>'">
+                            </div>
+                            <div class="text-center">
+                                <h3 style="color: ${character.color};">${character.name}</h3>
+                                <div style="
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 0.5rem;
+                                    padding: 0.5rem 1rem;
+                                    background: ${character.color}20;
+                                    border: 1px solid ${character.color};
+                                    border-radius: 8px;
+                                    margin: 1rem 0;
+                                    color: ${character.color};
+                                ">
+                                    <i class="fas fa-${getHouseIcon(character.house)}"></i>
+                                    ${character.title}
+                                </div>
+                                <div style="
+                                    padding: 0.5rem 1rem;
+                                    background: ${character.status === 'Vivo' ? 'rgba(46, 204, 113, 0.2)' : 'rgba(231, 76, 60, 0.2)'};
+                                    color: ${character.status === 'Vivo' ? '#2ecc71' : '#e74c3c'};
+                                    border-radius: 8px;
+                                    display: inline-block;
+                                    margin-left: 1rem;
+                                ">
+                                    ${character.status}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <blockquote style="
+                                font-style: italic;
+                                color: var(--color-primary);
+                                padding: 1rem;
+                                border-left: 4px solid var(--color-primary);
+                                background: rgba(0,0,0,0.3);
+                                border-radius: 0 8px 8px 0;
+                                margin-bottom: 2rem;
+                            ">
+                                ${character.quote}
+                            </blockquote>
+                            
+                            <p style="margin-bottom: 2rem;">${character.bio}</p>
+                            
+                            <h4 style="margin-bottom: 1rem;">Habilidades</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem;">
+                                ${character.abilities.map(ability => `
+                                    <span style="
+                                        padding: 0.5rem 1rem;
+                                        background: ${character.color}20;
+                                        color: ${character.color};
+                                        border: 1px solid ${character.color}40;
+                                        border-radius: 8px;
+                                    ">
+                                        ${ability}
+                                    </span>
+                                `).join('')}
+                            </div>
+                            
+                            <h4 style="margin-bottom: 1rem;">Estatísticas</h4>
+                            <div class="grid grid-2" style="gap: 1rem;">
+                                ${Object.entries(character.stats).map(([stat, value]) => `
+                                    <div style="
+                                        background: rgba(0,0,0,0.3);
+                                        padding: 1rem;
+                                        border-radius: 8px;
+                                        border: 1px solid rgba(255,255,255,0.1);
+                                    ">
+                                        <div style="
+                                            font-size: 0.875rem;
+                                            color: #adb5bd;
+                                            text-transform: uppercase;
+                                            letter-spacing: 1px;
+                                            margin-bottom: 0.5rem;
+                                        ">${stat}</div>
+                                        <div style="
+                                            font-size: 1.5rem;
+                                            font-weight: bold;
+                                            color: ${character.color};
+                                        ">${value}</div>
+                                        <div style="
+                                            width: 100%;
+                                            height: 6px;
+                                            background: rgba(255,255,255,0.1);
+                                            border-radius: 3px;
+                                            margin-top: 0.5rem;
+                                            overflow: hidden;
+                                        ">
+                                            <div style="
+                                                width: ${value}%;
+                                                height: 100%;
+                                                background: ${character.color};
+                                                border-radius: 3px;
+                                            "></div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            function getHouseIcon(house) {
+                const icons = {
+                    stark: 'snowflake',
+                    lannister: 'crown',
+                    targaryen: 'dragon',
+                    martell: 'sun',
+                    tarth: 'shield-alt',
+                    greyjoy: 'anchor'
+                };
+                return icons[house] || 'user';
+            }
+        }
+        
+        // ====== SIMULADOR DE GUERRA ======
+        function initWarSimulator() {
+            const phases = [
+                {
+                    title: "Preparação",
+                    icon: "fas fa-chess-board",
+                    description: "Planeje sua estratégia e escolha suas forças",
+                    content: `
+                        <h3 style="margin-bottom: 1rem;">Planejamento Estratégico</h3>
+                        <p style="margin-bottom: 2rem; color: #adb5bd;">Escolha suas tropas e posicione suas forças para a batalha</p>
+                        
+                        <div class="grid grid-3" style="gap: 1.5rem; margin-bottom: 2rem;">
+                            <div class="card" style="cursor: pointer;" onclick="selectArmy('infantry')">
+                                <div style="font-size: 36px; text-align: center; margin-bottom: 1rem;">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <h4 style="margin-bottom: 0.5rem;">Infantaria Pesada</h4>
+                                <p style="color: #adb5bd; margin-bottom: 1rem;">Unidades fortemente blindadas, lentas mas poderosas em combate corpo a corpo.</p>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                                    <span>Defesa: 90</span>
+                                    <span>Ataque: 70</span>
+                                    <span>Velocidade: 40</span>
+                                </div>
+                            </div>
+                            
+                            <div class="card" style="cursor: pointer;" onclick="selectArmy('cavalry')">
+                                <div style="font-size: 36px; text-align: center; margin-bottom: 1rem;">
+                                    <i class="fas fa-horse"></i>
+                                </div>
+                                <h4 style="margin-bottom: 0.5rem;">Cavalaria Ligeira</h4>
+                                <p style="color: #adb5bd; margin-bottom: 1rem;">Cavaleiros rápidos e ágeis, ideais para ataques surpresa e flanqueamento.</p>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                                    <span>Defesa: 50</span>
+                                    <span>Ataque: 85</span>
+                                    <span>Velocidade: 90</span>
+                                </div>
+                            </div>
+                            
+                            <div class="card" style="cursor: pointer;" onclick="selectArmy('archers')">
+                                <div style="font-size: 36px; text-align: center; margin-bottom: 1rem;">
+                                    <i class="fas fa-bullseye"></i>
+                                </div>
+                                <h4 style="margin-bottom: 0.5rem;">Arqueiros</h4>
+                                <p style="color: #adb5bd; margin-bottom: 1rem;">Atiradores de longo alcance, eficazes contra unidades desprotegidas.</p>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                                    <span>Defesa: 30</span>
+                                    <span>Ataque: 95</span>
+                                    <span>Alcance: 100</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="simulator-controls">
+                            <button class="btn btn-outline" onclick="prevPhase()">
+                                <i class="fas fa-arrow-left"></i>
+                                Anterior
+                            </button>
+                            <button class="btn btn-primary" onclick="nextPhase()">
+                                Próxima Fase
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    `
+                },
+                {
+                    title: "Batalha",
+                    icon: "fas fa-fist-raised",
+                    description: "Enfrente o inimigo no campo de batalha",
+                    content: `
+                        <h3 style="margin-bottom: 1rem;">Combate em Campo Aberto</h3>
+                        <p style="margin-bottom: 2rem; color: #adb5bd;">Comande suas tropas e tome decisões táticas em tempo real</p>
+                        
+                        <div style="
+                            background: linear-gradient(135deg, #1a472a, #2a623d);
+                            border: 2px solid var(--color-primary);
+                            border-radius: 12px;
+                            padding: 3rem;
+                            margin-bottom: 2rem;
+                            position: relative;
+                            min-height: 200px;
+                        ">
+                            <div style="
+                                position: absolute;
+                                top: 50%;
+                                left: 20%;
+                                transform: translateY(-50%);
+                                text-align: center;
+                            ">
+                                <div style="font-size: 48px;">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div>Seu Exército</div>
+                            </div>
+                            
+                            <div style="
+                                position: absolute;
+                                top: 50%;
+                                right: 20%;
+                                transform: translateY(-50%);
+                                text-align: center;
+                            ">
+                                <div style="font-size: 48px;">
+                                    <i class="fas fa-skull-crossbones"></i>
+                                </div>
+                                <div>Exército Inimigo</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 2rem;">
+                            <h4 style="margin-bottom: 1rem;">Opções Táticas</h4>
+                            <div class="grid grid-3" style="gap: 1rem;">
+                                <button class="btn btn-outline" onclick="makeBattleDecision('frontal')">
+                                    <i class="fas fa-fist-raised"></i>
+                                    Ataque Frontal
+                                </button>
+                                <button class="btn btn-outline" onclick="makeBattleDecision('flank')">
+                                    <i class="fas fa-shoe-prints"></i>
+                                    Flanquear
+                                </button>
+                                <button class="btn btn-outline" onclick="makeBattleDecision('retreat')">
+                                    <i class="fas fa-undo"></i>
+                                    Retirada Tática
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="simulator-controls">
+                            <button class="btn btn-outline" onclick="prevPhase()">
+                                <i class="fas fa-arrow-left"></i>
+                                Anterior
+                            </button>
+                            <button class="btn btn-primary" onclick="nextPhase()">
+                                Próxima Fase
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    `
+                },
+                {
+                    title: "Resultados",
+                    icon: "fas fa-trophy",
+                    description: "Veja o resultado da batalha e suas consequências",
+                    content: `
+                        <h3 style="margin-bottom: 1rem;">Resultado da Batalha</h3>
+                        <p style="margin-bottom: 2rem; color: #adb5bd;">Suas decisões determinaram o destino da guerra</p>
+                        
+                        <div class="card" style="margin-bottom: 1.5rem;">
+                            <h4 style="margin-bottom: 1rem;">Vitória Decisiva!</h4>
+                            <p style="margin-bottom: 1.5rem;">Seu exército demonstrou superioridade tática e conquistou o campo de batalha.</p>
+                            
+                            <div class="grid grid-3" style="gap: 1rem; margin-top: 1.5rem;">
+                                <div class="text-center">
+                                    <div style="font-size: 36px;">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <div style="font-size: 24px; font-weight: bold; color: var(--color-primary);">85%</div>
+                                    <div>Forças Restantes</div>
+                                </div>
+                                <div class="text-center">
+                                    <div style="font-size: 36px;">
+                                        <i class="fas fa-skull-crossbones"></i>
+                                    </div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #e74c3c;">15%</div>
+                                    <div>Inimigos Restantes</div>
+                                </div>
+                                <div class="text-center">
+                                    <div style="font-size: 36px;">
+                                        <i class="fas fa-medal"></i>
+                                    </div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #f1c40f;">+250</div>
+                                    <div>Renome Conquistado</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h4 style="margin-bottom: 1rem;">Consequências</h4>
+                            <ul style="list-style: none; padding-left: 0;">
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check-circle" style="color: #2ecc71;"></i> Território conquistado: +3 regiões</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check-circle" style="color: #2ecc71;"></i> Alianças fortalecidas: +2 casas aliadas</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check-circle" style="color: #2ecc71;"></i> Recursos adquiridos: +5000 ouros</li>
+                                <li><i class="fas fa-exclamation-triangle" style="color: #f39c12;"></i> Perdas sofridas: -20% do exército</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="simulator-controls">
+                            <button class="btn btn-outline" onclick="prevPhase()">
+                                <i class="fas fa-arrow-left"></i>
+                                Anterior
+                            </button>
+                            <button class="btn btn-primary" onclick="restartSimulation()">
+                                <i class="fas fa-redo"></i>
+                                Nova Simulação
+                            </button>
+                        </div>
+                    `
+                }
+            ];
+            
+            let currentPhase = 0;
+            
+            // Criar steps
+            const stepsContainer = document.getElementById('simulatorSteps');
+            phases.forEach((phase, index) => {
+                const step = document.createElement('div');
+                step.className = `simulator-step ${index === 0 ? 'active' : ''}`;
+                step.innerHTML = `
+                    <div style="font-size: 24px; margin-bottom: 0.5rem;">
+                        <i class="${phase.icon}"></i>
+                    </div>
+                    <div style="font-weight: 600;">${phase.title}</div>
+                    <div style="font-size: 0.75rem; color: #adb5bd;">${phase.description}</div>
+                `;
+                step.addEventListener('click', () => switchPhase(index));
+                stepsContainer.appendChild(step);
+            });
+            
+            // Mostrar primeira fase
+            switchPhase(0);
+            
+            function switchPhase(index) {
+                currentPhase = index;
+                const contentContainer = document.getElementById('simulatorContent');
+                contentContainer.innerHTML = phases[index].content;
+                
+                // Atualizar steps ativos
+                document.querySelectorAll('.simulator-step').forEach((step, i) => {
+                    step.classList.toggle('active', i === index);
+                });
+            }
+            
+            window.selectArmy = function(type) {
+                showNotification(`Exército ${type === 'infantry' ? 'Infantaria Pesada' : type === 'cavalry' ? 'Cavalaria Ligeira' : 'Arqueiros'} selecionado!`, 'success');
+            };
+            
+            window.makeBattleDecision = function(type) {
+                const decisions = {
+                    'frontal': 'Ataque Frontal',
+                    'flank': 'Flanqueamento',
+                    'retreat': 'Retirada Tática'
+                };
+                showNotification(`Decisão tomada: ${decisions[type]}`, 'success');
+            };
+            
+            window.nextPhase = function() {
+                if (currentPhase < phases.length - 1) {
+                    switchPhase(currentPhase + 1);
+                }
+            };
+            
+            window.prevPhase = function() {
+                if (currentPhase > 0) {
+                    switchPhase(currentPhase - 1);
+                }
+            };
+            
+            window.restartSimulation = function() {
+                switchPhase(0);
+                showNotification('Simulação reiniciada!', 'success');
+            };
+        }
+        
+        // ====== CRIADOR DE CASA ======
+        function initHouseCreator() {
+            const symbols = [
+                { id: 'wolf', emoji: '🐺', name: 'Lobo', color: '#4a90e2' },
+                { id: 'lion', emoji: '🦁', name: 'Leão', color: '#ffd700' },
+                { id: 'dragon', emoji: '🐉', name: 'Dragão', color: '#ff4500' },
+                { id: 'raven', emoji: '🐦‍⬛', name: 'Corvo', color: '#2d3748' },
+                { id: 'bear', emoji: '🐻', name: 'Urso', color: '#8b4513' }
+            ];
+            
+            const colors = [
+                { id: 'gold', name: 'Ouro', value: '#d4af37' },
+                { id: 'red', name: 'Vermelho', value: '#8b0000' },
+                { id: 'blue', name: 'Azul', value: '#1e3a8a' },
+                { id: 'green', name: 'Verde', value: '#14532d' },
+                { id: 'black', name: 'Preto', value: '#000000' },
+                { id: 'white', name: 'Branco', value: '#ffffff' }
+            ];
+            
+            let selectedSymbol = 'wolf';
+            let selectedColors = ['#d4af37', '#8b0000'];
+            
+            // Renderizar símbolos
+            const symbolPicker = document.getElementById('symbolPicker');
+            symbols.forEach(symbol => {
+                const option = document.createElement('div');
+                option.className = `color-option ${selectedSymbol === symbol.id ? 'selected' : ''}`;
+                option.style.background = symbol.color;
+                option.innerHTML = symbol.emoji;
+                option.title = symbol.name;
+                option.addEventListener('click', () => {
+                    selectedSymbol = symbol.id;
+                    updateSymbolPicker();
+                    updatePreview();
+                });
+                symbolPicker.appendChild(option);
+            });
+            
+            // Renderizar cores
+            const colorPicker = document.getElementById('colorPicker');
+            colors.forEach(color => {
+                const option = document.createElement('div');
+                option.className = `color-option ${selectedColors.includes(color.value) ? 'selected' : ''}`;
+                option.style.background = color.value;
+                option.title = color.name;
+                option.addEventListener('click', () => {
+                    if (selectedColors.includes(color.value)) {
+                        selectedColors = selectedColors.filter(c => c !== color.value);
+                    } else if (selectedColors.length < 2) {
+                        selectedColors.push(color.value);
+                    } else {
+                        selectedColors[0] = color.value;
+                    }
+                    updateColorPicker();
+                    updatePreview();
+                });
+                colorPicker.appendChild(option);
+            });
+            
+            function updateSymbolPicker() {
+                document.querySelectorAll('#symbolPicker .color-option').forEach((option, index) => {
+                    option.classList.toggle('selected', symbols[index].id === selectedSymbol);
+                });
+            }
+            
+            function updateColorPicker() {
+                document.querySelectorAll('#colorPicker .color-option').forEach((option, index) => {
+                    option.classList.toggle('selected', selectedColors.includes(colors[index].value));
+                });
+            }
+            
+            function updatePreview() {
+                const name = document.getElementById('houseName').value || 'Casa Corvinal';
+                const motto = document.getElementById('houseMotto').value || 'Na Escuridão, Vigiamos';
+                const territory = document.getElementById('houseTerritory').value;
+                const symbol = symbols.find(s => s.id === selectedSymbol);
+                
+                const territoryNames = {
+                    north: 'Terras do Norte',
+                    south: 'Terras do Sul',
+                    west: 'Terras do Oeste',
+                    east: 'Terras do Leste',
+                    riverlands: 'Terras Fluviais',
+                    vale: 'O Vale de Arryn'
+                };
+                
+                const preview = document.getElementById('housePreview');
+                preview.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 80px; color: ${symbol.color}; margin-bottom: 1.5rem;">
+                            ${symbol.emoji}
+                        </div>
+                        <h3 style="color: ${selectedColors[0]}; margin-bottom: 0.5rem;">${name}</h3>
+                        <p style="color: ${selectedColors[1]}; font-style: italic; margin-bottom: 1.5rem;">"${motto}"</p>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <span style="
+                                padding: 0.5rem 1rem;
+                                background: rgba(0,0,0,0.3);
+                                border-radius: 8px;
+                                color: var(--color-primary);
+                            ">
+                                <i class="fas fa-map-marker-alt"></i>
+                                ${territoryNames[territory] || 'Território'}
+                            </span>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+                            ${selectedColors.map(color => `
+                                <div style="
+                                    width: 40px;
+                                    height: 40px;
+                                    background: ${color};
+                                    border-radius: 8px;
+                                    border: 2px solid rgba(255,255,255,0.3);
+                                "></div>
+                            `).join('')}
+                        </div>
+                        
+                        <div style="
+                            background: rgba(0,0,0,0.3);
+                            padding: 1.5rem;
+                            border-radius: 12px;
+                            text-align: left;
+                        ">
+                            <h5 style="margin-bottom: 0.5rem; color: var(--color-primary);">História da Casa</h5>
+                            <p style="font-size: 0.875rem; line-height: 1.6; color: #adb5bd;">
+                                A Casa ${name.split(' ')[1] || name} foi fundada durante a Era dos Heróis. 
+                                Por séculos, manteve o lema "${motto}" como guia em tempos de guerra e paz. 
+                                Seus membros são conhecidos por sua ${symbol.name.toLowerCase()} como símbolo de força e honra.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Atualizar preview em tempo real
+            document.getElementById('houseName').addEventListener('input', updatePreview);
+            document.getElementById('houseMotto').addEventListener('input', updatePreview);
+            document.getElementById('houseTerritory').addEventListener('change', updatePreview);
+            
+            // Inicializar preview
+            updatePreview();
+        }
+        
+        function forgeHouse() {
+            const name = document.getElementById('houseName').value;
+            const motto = document.getElementById('houseMotto').value;
+            
+            if (!name || !motto) {
+                showNotification('Preencha o nome e lema da casa', 'error');
+                return;
+            }
+            
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> FORJANDO...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                showNotification(`A Casa ${name} foi forjada com sucesso!`, 'success');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 1500);
+        }
+        
+        // ====== CONSELHO DO REI ======
+        function initCouncilSystem() {
+            const positions = [
+                {
+                    id: 'hand',
+                    title: 'Mão do Rei',
+                    icon: 'fas fa-crown',
+                    description: 'Segundo em comando, toma decisões em nome do rei',
+                    decisions: [
+                        {
+                            title: 'Aumento de Impostos',
+                            description: 'Aumentar impostos para financiar o exército',
+                            consequences: {
+                                gold: '+500',
+                                popularity: '-20',
+                                military: '+30'
+                            }
+                        },
+                        {
+                            title: 'Aliança Estrangeira',
+                            description: 'Fazer aliança com uma potência estrangeira',
+                            consequences: {
+                                diplomacy: '+40',
+                                security: '-15',
+                                influence: '+25'
+                            }
+                        }
+                    ]
+                },
+                {
+                    id: 'coin',
+                    title: 'Mestre da Moeda',
+                    icon: 'fas fa-coins',
+                    description: 'Controla as finanças do reino',
+                    decisions: [
+                        {
+                            title: 'Investir em Comércio',
+                            description: 'Financiar rotas comerciais',
+                            consequences: {
+                                gold: '+300',
+                                commerce: '+40',
+                                risk: '+10'
+                            }
+                        },
+                        {
+                            title: 'Reduzir Gastos',
+                            description: 'Cortar gastos da corte',
+                            consequences: {
+                                gold: '+400',
+                                popularity: '-25',
+                                efficiency: '+30'
+                            }
+                        }
+                    ]
+                },
+                {
+                    id: 'war',
+                    title: 'Mestre da Guerra',
+                    icon: 'fas fa-helmet-battle',
+                    description: 'Estrategista militar',
+                    decisions: [
+                        {
+                            title: 'Recrutamento Militar',
+                            description: 'Recrutar novos soldados',
+                            consequences: {
+                                army: '+50',
+                                cost: '-400',
+                                security: '+35'
+                            }
+                        },
+                        {
+                            title: 'Fortificações',
+                            description: 'Construir fortificações nas fronteiras',
+                            consequences: {
+                                defense: '+45',
+                                cost: '-300',
+                                security: '+40'
+                            }
+                        }
+                    ]
+                },
+                {
+                    id: 'whispers',
+                    title: 'Mestre dos Sussurros',
+                    icon: 'fas fa-user-secret',
+                    description: 'Rede de espiões e informação',
+                    decisions: [
+                        {
+                            title: 'Espionagem Estrangeira',
+                            description: 'Enviar espiões para reinos inimigos',
+                            consequences: {
+                                intelligence: '+50',
+                                risk: '+25',
+                                advantage: '+35'
+                            }
+                        },
+                        {
+                            title: 'Descobrir Traidores',
+                            description: 'Identificar traidores na corte',
+                            consequences: {
+                                loyalty: '+45',
+                                fear: '+20',
+                                stability: '+25'
+                            }
+                        }
+                    ]
+                }
+            ];
+            
+            const councilGrid = document.getElementById('councilGrid');
+            
+            positions.forEach(position => {
+                const card = document.createElement('div');
+                card.className = 'council-card card';
+                card.innerHTML = `
+                    <div style="font-size: 48px; text-align: center; margin-bottom: 1rem; color: var(--color-primary);">
+                        <i class="${position.icon}"></i>
+                    </div>
+                    <h4 style="margin-bottom: 0.5rem;">${position.title}</h4>
+                    <p style="color: #adb5bd; margin-bottom: 1.5rem;">${position.description}</p>
+                    <button class="btn btn-secondary w-100" onclick="openCouncilDecision('${position.id}')">
+                        Tomar Decisão
+                    </button>
+                `;
+                councilGrid.appendChild(card);
+            });
+            
+            window.openCouncilDecision = function(positionId) {
+                const position = positions.find(p => p.id === positionId);
+                if (!position) return;
+                
+                const modal = document.getElementById('decisionModal');
+                const content = document.getElementById('modalContent');
+                
+                content.innerHTML = `
+                    <h3 style="margin-bottom: 1rem;">${position.title}</h3>
+                    <p style="margin-bottom: 1.5rem; color: #adb5bd;">${position.description}</p>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="margin-bottom: 1rem;">Decisões Disponíveis:</h4>
+                        ${position.decisions.map((decision, index) => `
+                            <div class="card" style="margin-bottom: 1rem; cursor: pointer;" onclick="makeCouncilDecision('${positionId}', ${index})">
+                                <h5 style="margin-bottom: 0.5rem;">${decision.title}</h5>
+                                <p style="margin-bottom: 1rem; color: #adb5bd;">${decision.description}</p>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    ${Object.entries(decision.consequences).map(([key, value]) => `
+                                        <span style="
+                                            padding: 0.25rem 0.5rem;
+                                            background: ${value > 0 ? 'rgba(46, 204, 113, 0.2)' : 'rgba(231, 76, 60, 0.2)'};
+                                            color: ${value > 0 ? '#2ecc71' : '#e74c3c'};
+                                            border-radius: 4px;
+                                            font-size: 0.75rem;
+                                        ">
+                                            ${key}: ${value > 0 ? '+' : ''}${value}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <button class="btn btn-primary w-100" onclick="closeModal()">
+                        <i class="fas fa-times"></i>
+                        Fechar
+                    </button>
+                `;
+                
+                modal.classList.add('active');
+            };
+            
+            window.makeCouncilDecision = function(positionId, decisionIndex) {
+                const position = positions.find(p => p.id === positionId);
+                const decision = position.decisions[decisionIndex];
+                
+                showNotification(`Decisão tomada: ${decision.title}`, 'success');
+                closeModal();
+            };
+        }
+        
+        // ====== FUNÇÕES UTILITÁRIAS ======
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: ${type === 'success' ? 'rgba(46, 204, 113, 0.9)' : 'rgba(231, 76, 60, 0.9)'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                z-index: 10000;
+                animation: fadeIn 0.3s ease;
+                box-shadow: var(--shadow);
+                max-width: 300px;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        function closeModal() {
+            document.getElementById('decisionModal').classList.remove('active');
+        }
+        
+        function startJourney() {
+            showNotification('Bem-vindo a Westeros! Que sua jornada seja gloriosa.', 'success');
+            scrollToSection('characters');
+        }
+        
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+        
+        function setupScrollEffect() {
+            window.addEventListener('scroll', function() {
+                const header = document.getElementById('mainHeader');
+                if (window.scrollY > 100) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+        }
+        
+        function setupNavigation() {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    if (targetId) {
+                        scrollToSection(targetId);
+                    }
+                });
+            });
+        }
+        
+        // Adicionar animação CSS para as notificações
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateY(0); }
+                to { opacity: 0; transform: translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
