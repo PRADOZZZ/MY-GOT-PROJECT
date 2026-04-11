@@ -1,0 +1,278 @@
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background: #000;
+  color: #fff;
+  line-height: 1.6;
+}
+
+.nav {
+  position: fixed;
+  width: 100%;
+  padding: 15px;
+  background: rgba(0,0,0,0.8);
+  z-index: 10;
+  transition: background 0.3s;
+}
+
+.nav-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.nav h2 {
+  margin: 0;
+  color: #fff;
+}
+
+.nav a {
+  color: #aaa;
+  margin-left: 20px;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.nav a:hover {
+  color: #fff;
+}
+
+.hero {
+  height: 100vh;
+  background: url('fundo do inicio.jpg') center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+}
+
+.hero-content {
+  position: relative;
+  text-align: center;
+  z-index: 1;
+}
+
+.hero h1 {
+  font-size: 4rem;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+}
+
+.hero p {
+  font-size: 1.5rem;
+  margin: 20px 0;
+}
+
+.hero button {
+  background: #c00;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.hero button:hover {
+  background: #a00;
+}
+
+.section {
+  padding: 60px 20px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.section h2 {
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 2.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
+  gap: 20px;
+}
+
+.timeline {
+  position: relative;
+  max-width: 800px;
+  margin: auto;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #c00;
+}
+
+.timeline-item {
+  margin: 40px 0;
+  padding-left: 60px;
+  position: relative;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.timeline-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 10px;
+  width: 20px;
+  height: 20px;
+  background: #c00;
+  border-radius: 50%;
+}
+
+.timeline-item h3 {
+  margin: 0 0 10px;
+  color: #fff;
+}
+
+.timeline-item p {
+  margin: 0 0 10px;
+  color: #ccc;
+}
+
+.expand-btn {
+  background: #c00;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.3s;
+}
+
+.expand-btn:hover {
+  background: #a00;
+}
+
+.extra-info {
+  margin-top: 10px;
+  padding: 10px;
+  background: #222;
+  border-radius: 5px;
+  color: #ccc;
+}
+
+.trailers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.trailer {
+  background: #111;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.trailer iframe {
+  width: 100%;
+  max-width: 560px;
+  height: 315px;
+}
+
+.quiz {
+  max-width: 600px;
+  margin: auto;
+  background: #111;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+#quiz-container {
+  margin: 20px 0;
+}
+
+#start-quiz {
+  background: #c00;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#start-quiz:hover {
+  background: #a00;
+}
+
+.option {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.option:hover {
+  background: #555;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #111;
+  margin-top: 40px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+  .hero p {
+    font-size: 1.2rem;
+  }
+  .section h2 {
+    font-size: 2rem;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .timeline::before {
+    left: 20px;
+  }
+  .timeline-item {
+    padding-left: 40px;
+  }
+  .timeline-item::before {
+    left: 10px;
+  }
+  .trailers-grid {
+    grid-template-columns: 1fr;
+  }
+  .trailer iframe {
+    height: 250px;
+  }
+}
